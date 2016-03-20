@@ -3,18 +3,26 @@
 
 (use srfi-1)
 
+(define vm-bits 16)
+(defmacro vm-bits c16)
+(defmacro vm-bits-1 c15)
+
 (define (le-number n)
   (cons 'list
 	(map (lambda (b)
 	       (if (logbit? b n) 'K 'KI))
-	     (iota 16))))
+	     (iota vm-bits))))
 
 (define (le-number2 n)
   (let rec ((b 0))
-    (if (> (ash 1 b) n)
-	(list (churchnum (- 16 b)) '(cons KI) 'nil)
-	`(icons ,(if (logbit? b n) 'K 'KI)
-		,(rec (+ b 1))))))
+    (cond ((= b vm-bits) 'nil)
+	  ((and (< (+ b 1) vm-bits) (> (ash 1 b) n))
+	   (list (churchnum (- vm-bits b)) '(cons KI) 'nil))
+	  ((and (< (+ b 1) vm-bits) (= (- (ash 1 vm-bits) 1) (logior (- (ash 1 b) 1) n)))
+	   (list (churchnum (- vm-bits b)) '(cons K) 'nil))
+	  (else
+	   `(icons ,(if (logbit? b n) 'K 'KI)
+		   ,(rec (+ b 1)))))))
 
 (define bfs
   '(((jmp 1 -1))
@@ -25,7 +33,7 @@
     ((exit 7))
     ))
 
-(define (data-section)
+(define (initial-data)
   `((c256 (cons le-0))
     ,(cons 'list
 	   (map le-number
@@ -45,6 +53,14 @@
 	 (let ((dst (regpos (first args)))
 	       (val (generate-reg-or-simm (second args))))
 	   `(set-reg vm ,dst ,val)))
+	((and (eq? op 'add) (eq? 1 (second args)))
+	 (let ((dst (regpos (first args)))
+	       (val (generate-reg-or-simm (first args))))
+	   `(set-reg vm ,dst (lib-inc vm ,val))))
+	((and (eq? op 'sub) (eq? 1 (second args)))
+	 (let ((dst (regpos (first args)))
+	       (val (generate-reg-or-simm (first args))))
+	   `(set-reg vm ,dst (lib-dec vm ,val))))
 	((eq? op 'add)
 	 (let ((dst (regpos (first args)))
 	       (lhs (generate-reg-or-simm (first args)))
@@ -108,6 +124,4 @@
   (cons 'clist (map (compose compile-to-string compile-chunk) bfs)))
 
 (define (main args)
-  (print (map
-	  compile-chunk
-	  bfs)))
+  (print (map compile-chunk bfs)))
