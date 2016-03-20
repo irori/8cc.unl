@@ -5,16 +5,12 @@
 
 (use srfi-60)
 
-(defmacro (bit-not x) (x KI K))
 (defmacro (bit-or x y) (x K y))
 (defmacro (bit-and x y) (x y KI))
 (defmacro (bit-xor x y) (x (bit-not y) y))
 (defmacro (bit-xor3 x y z) (bit-xor (bit-xor x y) z))
 
 ;; little endian binary number ---------------------------------------
-
-(defmacro le-0 (vm-bits (cons KI) nil))
-(defmacro le-1 (cons K (vm-bits-1 (cons KI) nil)))
 
 (defrecmacro (le-add-rec xs ys carry)
   (if (pair? xs)
@@ -117,27 +113,6 @@
 (defmacro (store-le mem addr val)
   ((store-le-rec (lambda (oldval) val) addr) mem))
 
-; VM state -----------------------------------------------------------
-
-; Register order: PC, A, B, C, D, BP, SP
-(defmacro num-regs c7)
-(defmacro initial-regs
-  (num-regs (cons le-0) nil))
-
-(defmacro (replace-car lst x) (cons x (cdr lst)))
-
-(defmacro (vm-regs vm) (car vm))
-(defmacro (set-reg vm regno val)
-  (replace-car vm (update-nth (K val) regno (vm-regs vm))))
-(defmacro (vm-memory vm) (cadr vm))
-(defmacro (set-memory vm mem) (cons (car vm)
-				    (cons mem (cddr vm))))
-
-(defmacro (vm-pc vm)
-  (car (vm-regs vm)))
-(defmacro (set-pc vm pc)
-  (replace-car vm (replace-car (vm-regs vm) pc)))
-
 ; Runner -------------------------------------------------------------
 
 (defmacro run
@@ -183,16 +158,6 @@
 	 (cont le-0)))))
 
 (defmacro lib (list le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store putc getc))
-(defmacro lib-inc (nth c2))
-(defmacro lib-dec (nth c3))
-(defmacro lib-add (nth c4))
-(defmacro lib-sub (nth c5))
-(defmacro lib-eq (nth c6))
-(defmacro lib-lt (nth c7))
-(defmacro lib-load (nth c8))
-(defmacro lib-store (nth c9))
-(defmacro lib-putc (nth c10))
-(defmacro lib-getc (nth c11))
 
 (defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
 			  (lambda (vm) (K vm (print-le (lib-load vm vm be-1))))
@@ -200,9 +165,6 @@
 			  (lambda (vm) (K vm (print-le (vm-pc vm))))
 			  (lambda (vm) (K vm (print-le (vm-pc vm))))
 			  (lambda (vm) (exit I))))
-
-(add-unl-macro! 'initial-data () (initial-data))
-(add-unl-macro! 'code-list '() (compile-code))
 
 (defmacro (initial-vm data)
   (cons initial-regs
@@ -214,5 +176,8 @@
     (run (initialize-memory code) (initial-vm data))))
 
 (define (main args)
-  (print-as-unl '(main code-list initial-data))
+  (print "``")
+  (print "# VM core")
+  (print-as-unl 'main)
+  (newline)
   0)

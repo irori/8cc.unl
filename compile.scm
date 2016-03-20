@@ -1,3 +1,4 @@
+#!/usr/bin/gosh
 (require "./unlc.scm")
 (require "./lib.scm")
 
@@ -6,6 +7,13 @@
 (define vm-bits 16)
 (defmacro vm-bits c16)
 (defmacro vm-bits-1 c15)
+
+(defmacro (bit-not x) (x KI K))
+
+;; little endian binary number ---------------------------------------
+
+(defmacro le-0 (vm-bits (cons KI) nil))
+(defmacro le-1 (cons K (vm-bits-1 (cons KI) nil)))
 
 (define (le-number n)
   (cons 'list
@@ -25,20 +33,40 @@
 	   `(icons ,(if (logbit? b n) 'K 'KI)
 		   ,(rec (+ b 1)))))))
 
-(define bfs
-  '(((jmp 1 -1))
-    ((getc a 2))
-    ((jeq 5 a 0 3))
-    ((putc a 4))
-    ((jmp 1 5))
-    ((exit 7))
-    ))
+; VM state -----------------------------------------------------------
 
-(define (initial-data)
-  `((c256 (cons le-0))
-    ,(cons 'list
-	   (map le-number2
-		'(257)))))
+; Register order: PC, A, B, C, D, BP, SP
+(defmacro num-regs c7)
+(defmacro initial-regs
+  (num-regs (cons le-0) nil))
+
+(defmacro (replace-car lst x) (cons x (cdr lst)))
+
+(defmacro (vm-regs vm) (car vm))
+(defmacro (set-reg vm regno val)
+  (replace-car vm (update-nth (K val) regno (vm-regs vm))))
+(defmacro (vm-memory vm) (cadr vm))
+(defmacro (set-memory vm mem) (cons (car vm)
+				    (cons mem (cddr vm))))
+
+(defmacro (vm-pc vm)
+  (car (vm-regs vm)))
+(defmacro (set-pc vm pc)
+  (replace-car vm (replace-car (vm-regs vm) pc)))
+
+;; VM's third element and later are library routines.
+(defmacro lib-inc (nth c2))
+(defmacro lib-dec (nth c3))
+(defmacro lib-add (nth c4))
+(defmacro lib-sub (nth c5))
+(defmacro lib-eq (nth c6))
+(defmacro lib-lt (nth c7))
+(defmacro lib-load (nth c8))
+(defmacro lib-store (nth c9))
+(defmacro lib-putc (nth c10))
+(defmacro lib-getc (nth c11))
+
+; Compiler -----------------------------------------------------------
 
 (define (regpos reg)
   (define regs '((pc . 0) (a . 1) (b . 2) (c . 3) (d . 4) (bp . 5) (sp . 6)))
@@ -58,7 +86,8 @@
 	 (let ((dst (regpos (first args)))
 	       (val (generate-reg-or-simm (first args))))
 	   `(set-reg vm ,dst (lib-inc vm ,val))))
-	((and (eq? op 'sub) (eq? 1 (second args)))
+	((or (and (eq? op 'sub) (eq? (second args) 1))
+	     (and (eq? op 'add) (eq? (second args) (- (ash 1 vm-bits) 1))))
 	 (let ((dst (regpos (first args)))
 	       (val (generate-reg-or-simm (first args))))
 	   `(set-reg vm ,dst (lib-dec vm ,val))))
@@ -121,8 +150,21 @@
 	  (map (lambda (inst) `(lambda (vm) ,(generate-op (car inst) (cdr inst))))
 	       chunk)))
 
-(define (compile-code)
-  (cons 'clist (map (compose compile-to-string compile-chunk) bfs)))
+(define (compile-code code)
+  (cons 'clist (map (compose compile-to-string compile-chunk) code)))
+
+(define (initial-data data)
+  `((c256 (cons le-0))
+    ,(cons 'clist
+	   (map (compose compile-to-string le-number2) data))))
 
 (define (main args)
-  (print (map compile-chunk bfs)))
+  (let* ((code (read))
+	 (data (read)))
+    (print "# instructions")
+    (print-as-unl (compile-code code))
+    (newline)
+    (print "# data")
+    (print-as-unl (initial-data data))
+    (newline)
+    0))
