@@ -132,20 +132,22 @@
 (defmacro (vm-memory vm) (cadr vm))
 (defmacro (set-memory vm mem) (cons (car vm)
 				    (cons mem (cddr vm))))
-(defmacro (vm-code vm) (car (cddr vm)))
 
 (defmacro (vm-pc vm)
   (car (vm-regs vm)))
 (defmacro (set-pc vm pc)
   (replace-car vm (replace-car (vm-regs vm) pc)))
 
-(defrecmacro (run vm)
-  (let* ((pc (vm-pc vm))
-	 (code (load-le (vm-code vm) pc)))
-    (run (code (set-pc vm (le-inc pc))))))
-
-
 ; Runner -------------------------------------------------------------
+
+(defmacro run
+  (lambda (code initial-vm)
+    (let rec ((vm initial-vm))
+      (let* ((pc (vm-pc vm))
+	     (f (load-le code pc)))
+	(rec (f (set-pc vm (le-inc pc))))))))
+
+; Runtime library ----------------------------------------------------
 
 (defmacro (mem-load vm addr)
   (load-le (vm-memory vm) addr))
@@ -181,16 +183,16 @@
 	 (cont le-0)))))
 
 (defmacro lib (list le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store putc getc))
-(defmacro lib-inc (nth c3))
-(defmacro lib-dec (nth c4))
-(defmacro lib-add (nth c5))
-(defmacro lib-sub (nth c6))
-(defmacro lib-eq (nth c7))
-(defmacro lib-lt (nth c8))
-(defmacro lib-load (nth c9))
-(defmacro lib-store (nth c10))
-(defmacro lib-putc (nth c11))
-(defmacro lib-getc (nth c12))
+(defmacro lib-inc (nth c2))
+(defmacro lib-dec (nth c3))
+(defmacro lib-add (nth c4))
+(defmacro lib-sub (nth c5))
+(defmacro lib-eq (nth c6))
+(defmacro lib-lt (nth c7))
+(defmacro lib-load (nth c8))
+(defmacro lib-store (nth c9))
+(defmacro lib-putc (nth c10))
+(defmacro lib-getc (nth c11))
 
 (defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
 			  (lambda (vm) (K vm (print-le (lib-load vm vm be-1))))
@@ -200,14 +202,17 @@
 			  (lambda (vm) (exit I))))
 
 (add-unl-macro! 'initial-data () (initial-data))
-(add-unl-macro! 'code '() (compile-code))
+(add-unl-macro! 'code-list '() (compile-code))
 
-(defmacro initial-vm
+(defmacro (initial-vm data)
   (cons initial-regs
-	(cons (initialize-memory initial-data)
-	      (cons (initialize-memory code)
-		    lib))))
+	(cons (initialize-memory data)
+	      lib)))
+
+(defmacro main
+  (lambda (code data)
+    (run (initialize-memory code) (initial-vm data))))
 
 (define (main args)
-  (print-as-unl '(run initial-vm))
+  (print-as-unl '(main code-list initial-data))
   0)

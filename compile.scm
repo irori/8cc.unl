@@ -13,13 +13,14 @@
 	       (if (logbit? b n) 'K 'KI))
 	     (iota vm-bits))))
 
+;; Compact, but less efficient
 (define (le-number2 n)
   (let rec ((b 0))
     (cond ((= b vm-bits) 'nil)
 	  ((and (< (+ b 1) vm-bits) (> (ash 1 b) n))
-	   (list (churchnum (- vm-bits b)) '(cons KI) 'nil))
+	   (list (churchnum (- vm-bits b)) '(icons KI) 'nil))
 	  ((and (< (+ b 1) vm-bits) (= (- (ash 1 vm-bits) 1) (logior (- (ash 1 b) 1) n)))
-	   (list (churchnum (- vm-bits b)) '(cons K) 'nil))
+	   (list (churchnum (- vm-bits b)) '(icons K) 'nil))
 	  (else
 	   `(icons ,(if (logbit? b n) 'K 'KI)
 		   ,(rec (+ b 1)))))))
@@ -36,7 +37,7 @@
 (define (initial-data)
   `((c256 (cons le-0))
     ,(cons 'list
-	   (map le-number
+	   (map le-number2
 		'(257)))))
 
 (define (regpos reg)
