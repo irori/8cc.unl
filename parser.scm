@@ -12,9 +12,9 @@
 (define INT_MIN (- (ash 1 (- vm-bits 1))))
 
 (define (remove-comment line)
-  (if (eq? (string-ref line 0) #\#)
+  (if (or (string=? line "") (eq? (string-ref line 0) #\#))
       ""
-      (string-trim (regexp-replace #/\s# .*/ line ""))))
+      (string-trim-both (regexp-replace #/\s# .*/ line ""))))
 
 (define jmp-ops
   '((jmp . 1)
@@ -65,6 +65,8 @@
        (inc! lineno)
 
        (rxmatch-case (remove-comment line)
+
+	 (#/^$/ (#f))
 
          (#/^\.set\s+(\w+)\s*,\s*(.+)/ (#f name val)
 	   (hash-table-put! labels name
