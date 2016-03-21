@@ -1,7 +1,9 @@
 #!/usr/bin/gosh
-(require "./unlc.scm")
-(require "./lib.scm")
-(require "./compile.scm")
+(add-load-path "." :relative)
+
+(use unlc)
+(use lib)
+(use unlasm)
 
 (use srfi-60)
 

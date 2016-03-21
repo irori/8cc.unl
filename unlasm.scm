@@ -1,6 +1,13 @@
 #!/usr/bin/gosh
-(require "./unlc.scm")
-(require "./lib.scm")
+
+(add-load-path "." :relative)
+
+(define-module unlasm
+  (use unlc)
+  (use lib)
+  (export le-number le-number2)
+  )
+(select-module unlasm)
 
 (use srfi-1)
 
@@ -158,6 +165,7 @@
     ,(cons 'clist
 	   (map (compose compile-to-string le-number2) data))))
 
+;; usage: gosh -m unlasm unlasm.scm
 (define (main args)
   (let* ((code (read))
 	 (data (read)))
