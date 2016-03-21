@@ -3,16 +3,13 @@
 (add-load-path "." :relative)
 
 (define-module unlasm
+  (use parser)
   (use unlc)
   (use lib)
+  (use srfi-1)
   (export le-number le-number2 generate)
   )
 (select-module unlasm)
-
-(use srfi-1)
-
-(define vm-bits
-  (if (sys-getenv "BFS24") 24 16))
 
 (add-unl-macro! 'vm-bits '() (churchnum vm-bits))
 (add-unl-macro! 'vm-bits-1 '() (churchnum (- vm-bits 1)))
@@ -167,17 +164,17 @@
     ,(cons 'clist
 	   (map (compose compile-to-string le-number2) data))))
 
-(define (generate)
-  (let* ((code (read))
-	 (data (read)))
-    (print "# instructions")
-    (print-as-unl (compile-code code))
-    (newline)
-    (print "# data")
-    (print-as-unl (initial-data data))
-    (newline)
-    0))
+(define (generate code data)
+  (print "# instructions")
+  (print-as-unl (compile-code code))
+  (newline)
+  (print "# data")
+  (print-as-unl (initial-data data))
+  (newline)
+  0)
 
 ;; usage: gosh -m unlasm unlasm.scm
 (define (main args)
-  (generate))
+  (let* ((code (read))
+	 (data (read)))
+    (generate code data)))

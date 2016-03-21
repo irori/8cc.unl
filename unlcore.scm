@@ -1,6 +1,7 @@
 #!/usr/bin/gosh
 (add-load-path "." :relative)
 
+(use parser)
 (use unlc)
 (use lib)
 (use unlasm)
@@ -178,9 +179,10 @@
     (run (initialize-memory code) (initial-vm data))))
 
 (define (main args)
-  (print "``")
-  (print "# VM core")
-  (print-as-unl 'main)
-  (newline)
-  (generate)
-  0)
+  (let ((parsed (parse)))
+    (print "``")
+    (print "# VM core")
+    (print-as-unl 'main)
+    (newline)
+    (generate (car parsed) (cadr parsed))
+    0))

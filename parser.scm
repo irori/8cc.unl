@@ -1,9 +1,15 @@
-#!/usr/bin/gosh
-(use srfi-13)
-(use gauche.sequence)
+(define-module parser
+  (use srfi-13)
+  (use gauche.sequence)
+  (export vm-bits parse)
+  )
+(select-module parser)
 
-(define UINT_MAX (- (ash 1 24) 1))
-(define INT_MIN (- (ash 1 23)))
+(define vm-bits
+  (if (sys-getenv "BFS24") 24 16))
+
+(define UINT_MAX (- (ash 1 vm-bits) 1))
+(define INT_MIN (- (ash 1 (- vm-bits 1))))
 
 (define (remove-comment line)
   (if (eq? (string-ref line 0) #\#)
@@ -162,11 +168,9 @@
 				(logand UINT_MAX a))))
 		       args)))
 		 (append (list op) args-resolved (list lineno)))))
-	   (reverse! #?=opa)))
+	   (reverse! opa)))
     (reverse! *code*)))
-  (print *code*)
-  (print *data*)
-  )
+  (list *code* *data*))
 
 (define (parse-arg str op i lineno)
   (or (rxmatch-case str
@@ -181,4 +185,8 @@
       (else #f))
       (error "invalid use of " op " at line " lineno)))
 
-(parse)
+;; usage: gosh -m parser parser.scm
+(define (main args)
+  (let ((r (parse)))
+    (print (car r))
+    (print (cadr r))))
