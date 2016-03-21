@@ -5,7 +5,7 @@
 (define-module unlasm
   (use unlc)
   (use lib)
-  (export le-number le-number2)
+  (export le-number le-number2 generate)
   )
 (select-module unlasm)
 
@@ -165,8 +165,7 @@
     ,(cons 'clist
 	   (map (compose compile-to-string le-number2) data))))
 
-;; usage: gosh -m unlasm unlasm.scm
-(define (main args)
+(define (generate)
   (let* ((code (read))
 	 (data (read)))
     (print "# instructions")
@@ -176,3 +175,7 @@
     (print-as-unl (initial-data data))
     (newline)
     0))
+
+;; usage: gosh -m unlasm unlasm.scm
+(define (main args)
+  (generate))

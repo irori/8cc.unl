@@ -182,4 +182,5 @@
   (print "# VM core")
   (print-as-unl 'main)
   (newline)
+  (generate)
   0)
