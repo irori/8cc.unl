@@ -11,9 +11,11 @@
 
 (use srfi-1)
 
-(define vm-bits 16)
-(defmacro vm-bits c16)
-(defmacro vm-bits-1 c15)
+(define vm-bits
+  (if (sys-getenv "BFS24") 24 16))
+
+(add-unl-macro! 'vm-bits '() (churchnum vm-bits))
+(add-unl-macro! 'vm-bits-1 '() (churchnum (- vm-bits 1)))
 
 (defmacro (bit-not x) (x KI K))
 
