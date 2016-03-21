@@ -1,0 +1,16 @@
+# -*- asm -*-
+	.data
+msg:
+	.ascii "Hello, world!\n"
+msgend:
+
+	.text
+	mov D, msg
+	mov C, msgend
+loop:
+	load A, D
+	putc A
+	add D, 1
+	jlt loop, D, C
+	exit
+	
