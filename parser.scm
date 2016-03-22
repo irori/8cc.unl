@@ -133,7 +133,7 @@
 		    (error "invalid first arg for " op " at line " lineno))
 
 		(if (or (hash-table-exists? labeled-pcs (cur-code-addr))
-			(memq prev-op '(load store putc getc exit))
+			(eq? prev-op 'exit)
 			(assq prev-op jmp-ops))
 		    (push! *code* (list (list op args lineno)))
 		    (set-car! *code* (cons (list op args lineno) (car *code*))))
