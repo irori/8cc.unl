@@ -6,7 +6,10 @@
 (select-module parser)
 
 (define vm-bits
-  (if (sys-getenv "BFS24") 24 16))
+  (let ((bits (sys-getenv "BITLENGTH")))
+    (cond (bits (string->number bits))
+	  ((sys-getenv "BFS24") 24)
+	  (else 16))))
 
 (define UINT_MAX (- (ash 1 vm-bits) 1))
 (define INT_MIN (- (ash 1 (- vm-bits 1))))
