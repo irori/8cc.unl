@@ -7,44 +7,32 @@
   (use unlc)
   (use lib)
   (use srfi-1)
-  (export le-number le-number2 generate)
+  (export vm-number generate)
   )
 (select-module unlasm)
 
-(add-unl-macro! 'vm-bits '() (churchnum vm-bits))
-(add-unl-macro! 'vm-bits-1 '() (churchnum (- vm-bits 1)))
+;; Integer -----------------------------------------------------------
 
-(defmacro (bit-not x) (x KI K))
+(defmacro make-int (lambda (lo mi hi f) (f lo mi hi)))
+(defmacro make-byte (lambda (b f) (f b c0 c0)))
+(defmacro (inline-int lo mi hi) (lambda (f) (f lo mi hi)))
+(defmacro (low n)  (n (lambda (x _ _) x)))
+(defmacro (mid n)  (n (lambda (_ x _) x)))
+(defmacro (high n) (n (lambda (_ _ x) x)))
+(defmacro int-0 (inline-int c0 c0 c0))
 
-;; little endian binary number ---------------------------------------
-
-(defmacro le-0 (vm-bits (cons KI) nil))
-(defmacro le-1 (cons K (vm-bits-1 (cons KI) nil)))
-
-(define (le-number n)
-  (cons 'list
-	(map (lambda (b)
-	       (if (logbit? b n) 'K 'KI))
-	     (iota vm-bits))))
-
-;; Compact, but less efficient
-(define (le-number2 n)
-  (let rec ((b 0))
-    (cond ((= b vm-bits) 'nil)
-	  ((and (< (+ b 1) vm-bits) (> (ash 1 b) n))
-	   (list (churchnum (- vm-bits b)) '(icons KI) 'nil))
-	  ((and (< (+ b 1) vm-bits) (= (- (ash 1 vm-bits) 1) (logior (- (ash 1 b) 1) n)))
-	   (list (churchnum (- vm-bits b)) '(icons K) 'nil))
-	  (else
-	   `(icons ,(if (logbit? b n) 'K 'KI)
-		   ,(rec (+ b 1)))))))
+(define (vm-number n)
+  (cons 'inline-int
+	(map (lambda (sft)
+	       (churchnum (logand #xff (ash n sft))))
+	     (list 0 -8 -16))))
 
 ; VM state -----------------------------------------------------------
 
 ; Register order: PC, A, B, C, D, BP, SP
 (defmacro num-regs c7)
 (defmacro initial-regs
-  (num-regs (cons le-0) nil))
+  (num-regs (cons int-0) nil))
 
 (defmacro (replace-car lst x) (cons x (cdr lst)))
 
@@ -64,7 +52,7 @@
 (defmacro lib-inc (nth c2))
 (defmacro lib-dec (nth c3))
 (defmacro lib-add (nth c4))
-(defmacro lib-sub (nth c5))
+(defmacro lib-neg (nth c5))
 (defmacro lib-eq (nth c6))
 (defmacro lib-lt (nth c7))
 (defmacro lib-load (nth c8))
@@ -81,7 +69,7 @@
 (define (generate-reg-or-simm x)
   (if (symbol? x)
       `(nth ,(regpos x) (vm-regs vm))
-      (le-number x)))
+      (vm-number x)))
 
 (define (generate-op op args)
   (cond ((eq? op 'mov)
@@ -106,7 +94,7 @@
 	 (let ((dst (regpos (first args)))
 	       (lhs (generate-reg-or-simm (first args)))
 	       (rhs (generate-reg-or-simm (second args))))
-	   `(set-reg vm ,dst (lib-sub vm ,lhs ,rhs))))
+	   `(set-reg vm ,dst (lib-add vm ,lhs (lib-neg vm ,rhs)))))
 	((eq? op 'jmp)
 	 (let ((addr (generate-reg-or-simm (first args))))
 	   `(set-reg vm ,(regpos 'pc) ,addr)))
@@ -130,8 +118,8 @@
 		 (not? (memq op '(ne le ge))))
 	     (let ((val `(,cmp vm ,(if flip? rhs lhs) ,(if flip? lhs rhs))))
 	       `(set-reg vm ,dst
-			 (cons ,(if not? `(bit-not ,val) val)
-			       (c15 (cons KI) nil)))))))
+			 (make-byte (,val ,(if not? 'c0 'c1)
+					  ,(if not? 'c1 'c0))))))))
 	((eq? op 'load)
 	 (let ((dst (regpos (first args)))
 	       (addr (generate-reg-or-simm (second args))))
@@ -145,7 +133,7 @@
 	   `(K vm (lib-putc vm ,val))))
 	((eq? op 'getc)
 	 (let ((dst (regpos (first args))))
-	   `(set-reg vm ,dst (call/cc (lib-getc vm)))))
+	   `(set-reg vm ,dst (make-byte (call/cc (lib-getc vm))))))
 	((eq? op 'exit)
 	 '(exit I))))
 
@@ -157,12 +145,14 @@
 	       chunk)))
 
 (define (compile-code code)
-  (cons 'clist (map (compose compile-to-string compile-chunk) code)))
+  (cons 'clist (append (map (compose compile-to-string compile-chunk) code)
+		       (map (lambda (_) 'I) (iota 256)))))
 
 (define (initial-data data)
-  `((c256 (cons le-0))
+  `((c256 (cons int-0))
     ,(cons 'clist
-	   (map (compose compile-to-string le-number2) data))))
+	   (map (compose compile-to-string vm-number)
+		(append data (map (lambda (_) 0) (iota 256)))))))
 
 (define (generate code data)
   (print "# instructions")

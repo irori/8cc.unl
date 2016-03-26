@@ -8,113 +8,138 @@
 
 (use srfi-60)
 
-(defmacro (bit-or x y) (x K y))
-(defmacro (bit-and x y) (x y KI))
-(defmacro (bit-xor x y) (x (bit-not y) y))
-(defmacro (bit-xor3 x y z) (bit-xor (bit-xor x y) z))
+;; ALU ---------------------------------------------------------------
 
-;; little endian binary number ---------------------------------------
+(defmacro int-inc
+  (lambda (n)
+    (let ((lo (succ (low n))))
+      (if (< lo c256)
+	  (make-int lo (mid n) (high n))
+	  (let ((mi (succ (mid n))))
+	    (if (< mi c256)
+		(make-int c0 mi (high n))
+		(make-int c0 c0	; TODO: inline?
+			  (let ((hi (succ (high n))))
+			    (if< hi c256 hi c0)))))))))
 
-(defrecmacro (le-add-rec xs ys carry)
-  (if (pair? xs)
-      (cons (bit-xor3 (car xs) (car ys) carry)
-	    (le-add-rec (cdr xs) (cdr ys)
-			((carry bit-or bit-and) (car xs) (car ys))))
-      nil))
+(defmacro int-dec
+  (lambda (n)
+    (if (nonzero? (low n))
+	(make-int (pred (low n)) (mid n) (high n))
+	(if (nonzero? (mid n))
+	    (make-int c255 (pred (mid n)) (high n))
+	    (make-int c255 c255 (ifnonzero (high n) (pred (high n)) c255)))))) ; TODO: inline?
 
-(defmacro (le-add xs ys) (le-add-rec xs ys KI))
+(add-unl-macro! 'add-table '()
+  `(clist ,@(map (lambda (n) `(cons ,(churchnum n) I)) (iota 256))
+	  ,@(map (lambda (n) `(cons ,(churchnum n) cdr)) (iota 256))))
 
-(defrecmacro (le-sub-rec xs ys borrow)
-  (if (pair? xs)
-      (cons (bit-xor3 (car xs) (car ys) borrow)
-	    (le-sub-rec (cdr xs) (cdr ys)
-			(((car xs) bit-and bit-or) (car ys) borrow)))
-      nil))
+(defmacro int-add
+  (let ((tbl add-table))
+    (lambda (x y)
+      ((nth (low y) ((low x) cdr tbl))
+       (lambda (z1 c1)
+	 ((nth (mid y) ((mid x) cdr (c1 tbl)))
+	  (lambda (z2 c2)
+	    ((nth (high y) ((high x) cdr (c2 tbl)))
+	     (lambda (z3 c3)
+	       (inline-int z1 z2 z3))))))))))
 
-(defmacro (le-sub xs ys) (le-sub-rec xs ys KI))
+(add-unl-macro! 'not-table '()
+  `(clist ,@(map (lambda (n) (churchnum (- 255 n))) (iota 256))))
+
+(defmacro int-neg
+  (let ((tbl not-table))
+    (lambda (n)
+      (int-inc
+       (make-int (nth (low n) tbl)
+		 (nth (mid n) tbl)
+		 (nth (high n) tbl))))))
 
 ;; returns K(true) or KI(false)
-(defrecmacro (le-eq xs ys)
-  (if (pair? xs)
-      (if ((bit-xor (car xs) (car ys)) I V)
-	  KI
-	  (le-eq (cdr xs) (cdr ys)))
-      K))
+(defmacro int-eq
+  (lambda (x y)
+    (if (= (low x) (low y))
+	(if (= (mid x) (mid y))
+	    (if (= (high x) (high y)) K KI)
+	    KI)
+	KI)))
 
 ;; returns K(true) or KI(false)
-(defrecmacro (le-lt-rec xs ys borrow)
-  (if (pair? xs)
-      (le-lt-rec (cdr xs) (cdr ys)
-		 (((car xs) bit-and bit-or) (car ys) borrow))
-      borrow))
-
-(defmacro (le-lt xs ys) (le-lt-rec xs ys KI))
-
-(defrecmacro (le-inc xs)
-  (if (pair? xs)
-      (if ((car xs) I V)
-	  (cons KI (le-inc (cdr xs)))
-	  (cons K (cdr xs)))
-      nil))
-
-(defrecmacro (le-dec xs)
-  (if (pair? xs)
-      (if ((car xs) I V)
-	  (cons KI (cdr xs))
-	  (cons K (le-dec (cdr xs))))
-      nil))
+(defmacro int-lt
+  (lambda (x y)
+    (if (= (high x) (high y))
+	(if (= (mid x) (mid y))
+	    (if< (low x) (low y) K KI)
+	    (if< (mid x) (mid y) K KI))
+	(if< (high x) (high y) K KI))))
 
 ;; for debug
-(defrecmacro (le->number xs)
-  (if (pair? xs)
-      (((car xs) succ I)
-       (dbl (le->number (cdr xs))))
-      c0))
-
-(defmacro (print-le n)
-  (print-digit (le->number n) I #\newline I))
+(defmacro print-int
+  (lambda (n)
+    (S (print-digit (high n))
+       (S #\space
+	  (S (print-digit (mid n))
+	     (S #\space
+		(S (print-digit (low n))
+		   #\newline))))
+       I)))
 
 ;; memory ------------------------------------------------------------
 
-(defrecmacro (zero-memory bits)
-  (if (cons1? bits)
-      (icons (zero-memory (1-of-1 bits))
-	     (zero-memory (1-of-1 bits)))
-      le-0))
+(defmacro zero-line (c256 (cons int-0) nil))
 
-(defrecmacro (initialize-memory-rec bits lst)
-  (if (pair? lst)
-      (if (cons1? bits)
-	  ((initialize-memory-rec (1-of-1 bits) lst)
-	   (lambda (left lst2)
-	     ((initialize-memory-rec (1-of-1 bits) lst2)
-	      (lambda (right lst3)
-		(cons (cons left right) lst3)))))
-	  lst)
-      (cons (zero-memory bits) nil)))
+(defmacro zero-page (c256 (cons zero-line) nil))
+
+(defrecmacro (initialize-lines n lst)
+  (if (cons1? n)
+      (let ((next (c256 cdr lst)))
+	(if (pair? next)
+	    ((initialize-lines (1-of-1 n) next)
+	     (lambda (lines rest)
+	       (cons (cons lst lines) rest)))
+	    (cons ((cons1-length n) (cons zero-line) nil) nil)))
+      (cons nil lst)))
+
+(defrecmacro (initialize-pages n data)
+  (if (cons1? n)
+      (if (pair? data)
+	  ((initialize-lines (to-cons1 c256) data)
+	   (lambda (page rest)
+	     ((initialize-pages (1-of-1 n) rest)
+	      (lambda (pages rest2)
+		(cons (cons page pages) rest2)))))
+	  (cons ((cons1-length n) (cons zero-page) nil) nil))
+      (cons nil data)))
 
 (defmacro (initialize-memory data)
-  (car (initialize-memory-rec (to-cons1 vm-bits) data)))
+  (car (initialize-pages (to-cons1 c256) data)))
 
-(defrecmacro (le-loader addr)
-  (if (pair? addr)
-      (compose ((car addr) cdr car) (le-loader (cdr addr)))
-      I))
+(defmacro load16
+  (lambda (mem addr)
+    (nth (low addr)
+	 (nth (high addr) mem))))
 
-(defmacro (load-le mem addr)
-  ((le-loader addr) mem))
+(defmacro load24
+  (lambda (mem addr)
+    (nth (low addr)
+	 (nth (mid addr)
+	      (nth (high addr) mem)))))
 
-(defrecmacro (store-le-rec f addr)
-  (if (pair? addr)
-      (store-le-rec
-       ((car addr)
-	(lambda (m) (cons (car m) (f (cdr m))))
-	(lambda (m) (cons (f (car m)) (cdr m))))
-       (cdr addr))
-      f))
-
-(defmacro (store-le mem addr val)
-  ((store-le-rec (lambda (oldval) val) addr) mem))
+(defmacro store24
+  (lambda (mem addr val)
+    (update-nth
+     (lambda (page)
+       (update-nth
+	(lambda (line)
+	  (update-nth
+	   (lambda (oldval) val)
+	   (low addr)
+	   line))
+	(mid addr)
+	page))
+     (high addr)
+     mem)))
 
 ; Runner -------------------------------------------------------------
 
@@ -122,52 +147,45 @@
   (lambda (code initial-vm)
     (let rec ((vm initial-vm))
       (let* ((pc (vm-pc vm))
-	     (f (load-le code pc)))
-	(rec (f (set-pc vm (le-inc pc))))))))
+	     (f (load24 code pc)))
+	(rec (f (set-pc vm (int-inc pc))))))))
 
 ; Runtime library ----------------------------------------------------
 
 (defmacro (mem-load vm addr)
-  (load-le (vm-memory vm) addr))
+  (load24 (vm-memory vm) addr))
 
 (defmacro (mem-store vm addr val)
-  (set-memory vm (store-le (vm-memory vm) addr val)))
+  (set-memory vm (store24 (vm-memory vm) addr val)))
 
-;; TODO: make this 8-bit clean
-(define (putc-func bits)
-  (let* ((d (length bits))
-	 (hd (string->symbol (string-append "hd" (number->string d))))
-	 (tl (string->symbol (string-append "tl" (number->string d)))))
-    (if (= (length bits) 6) ; Only supports characters up to 127
-	`(lambda (,hd _)
-	   (,hd ,(integer->char (list->integer (cons #t bits)))
-		,(integer->char (list->integer (cons #f bits)))))
-	`(lambda (,hd ,tl)
-	   (,tl (,hd ,(putc-func (cons #t bits))
-		     ,(putc-func (cons #f bits))))))))
+;; TODO: make putc / getc 8-bit clean
+(add-unl-macro! 'putc-table '()
+  `(list ,@(map integer->char (iota 128)))) ; Only supports characters up to 127
 
-(add-unl-macro! 'putc '(n) `(n ,(putc-func '()) I))
-   
+(defmacro putc
+  (lambda (c)
+    (nth (low c) putc-table I)))
+
 (add-unl-macro! 'getc '()
   `(lambda (cont)
      (@ I
 	(,@(map (lambda (i)
-		  `((? ,(integer->char i)) I cont ,(le-number2 i)))
+		  `((? ,(integer->char i)) I cont ,(churchnum i)))
 		(filter
 		 (lambda (i)
 		   (let ((c (integer->char i)))
 		     (or (char-whitespace? c) (not (eq? (char-general-category c) 'Cc)))))
 		 (iota 128)))
-	 (cont le-0)))))
+	 (cont c0)))))
 
-(defmacro lib (list le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store putc getc))
+(defmacro lib (clist int-inc int-dec int-add int-neg int-eq int-lt mem-load mem-store putc getc))
 
-(defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
-			  (lambda (vm) (K vm (print-le (lib-load vm vm be-1))))
-			  (lambda (vm) (K vm (print-le (vm-pc vm))))
-			  (lambda (vm) (K vm (print-le (vm-pc vm))))
-			  (lambda (vm) (K vm (print-le (vm-pc vm))))
-			  (lambda (vm) (exit I))))
+(defmacro test-code (cons* (lambda (vm) (mem-store vm (make-int c0 c0 c1) (make-int c3 c2 c1)))
+			   (lambda (vm) (K vm (print-int (lib-load vm vm (make-int c0 c0 c1)))))
+			   (lambda (vm) (K vm (print-int (vm-pc vm))))
+			   (lambda (vm) (K vm (print-int (vm-pc vm))))
+			   (lambda (vm) (K vm (print-int (vm-pc vm))))
+			   (c256 (cons (lambda (vm) (exit I))) nil)))
 
 (defmacro (initial-vm data)
   (cons initial-regs

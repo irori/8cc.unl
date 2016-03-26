@@ -8,7 +8,7 @@ check: out/unl out/hello.unl
 	out/unl out/hello.unl
 
 out/%.unl: test/%.bfs
-	gosh unlcore.scm < $< > $@
+	gosh unlcore.scm < $< > $@.tmp && mv $@.tmp $@
 
 out/unl: unl/unl.c
 	$(CC) -O3 -Wno-pointer-sign -o $@ $<
