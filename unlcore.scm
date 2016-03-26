@@ -10,7 +10,16 @@
 
 ;; ALU ---------------------------------------------------------------
 
-(defmacro int-inc
+(defmacro16 int-inc
+  (lambda (n)
+    (let ((lo (succ (low n))))
+      (if (< lo c256)
+	  (make-int lo (high n))
+	  (make-int c0
+		    (let ((hi (succ (high n))))
+		      (if< hi c256 hi c0)))))))
+
+(defmacro24 int-inc
   (lambda (n)
     (let ((lo (succ (low n))))
       (if (< lo c256)
@@ -22,7 +31,13 @@
 			  (let ((hi (succ (high n))))
 			    (if< hi c256 hi c0)))))))))
 
-(defmacro int-dec
+(defmacro16 int-dec
+  (lambda (n)
+    (if (nonzero? (low n))
+	(make-int (pred (low n)) (high n))
+	(make-int c255 (ifnonzero (high n) (pred (high n)) c255)))))
+
+(defmacro24 int-dec
   (lambda (n)
     (if (nonzero? (low n))
 	(make-int (pred (low n)) (mid n) (high n))
@@ -34,7 +49,16 @@
   `(clist ,@(map (lambda (n) `(cons ,(churchnum n) I)) (iota 256))
 	  ,@(map (lambda (n) `(cons ,(churchnum n) cdr)) (iota 256))))
 
-(defmacro int-add
+(defmacro16 int-add
+  (let ((tbl add-table))
+    (lambda (x y)
+      ((nth (low y) ((low x) cdr tbl))
+       (lambda (z1 c1)
+	 ((nth (high y) ((high x) cdr (c1 tbl)))
+	  (lambda (z2 c2)
+	    (inline-int z1 z2))))))))
+
+(defmacro24 int-add
   (let ((tbl add-table))
     (lambda (x y)
       ((nth (low y) ((low x) cdr tbl))
@@ -48,7 +72,14 @@
 (add-unl-macro! 'not-table '()
   `(clist ,@(map (lambda (n) (churchnum (- 255 n))) (iota 256))))
 
-(defmacro int-neg
+(defmacro16 int-neg
+  (let ((tbl not-table))
+    (lambda (n)
+      (int-inc
+       (make-int (nth (low n) tbl)
+		 (nth (high n) tbl))))))
+
+(defmacro24 int-neg
   (let ((tbl not-table))
     (lambda (n)
       (int-inc
@@ -57,7 +88,13 @@
 		 (nth (high n) tbl))))))
 
 ;; returns K(true) or KI(false)
-(defmacro int-eq
+(defmacro16 int-eq
+  (lambda (x y)
+    (if (= (low x) (low y))
+	(if (= (high x) (high y)) K KI)
+	KI)))
+
+(defmacro24 int-eq
   (lambda (x y)
     (if (= (low x) (low y))
 	(if (= (mid x) (mid y))
@@ -66,7 +103,13 @@
 	KI)))
 
 ;; returns K(true) or KI(false)
-(defmacro int-lt
+(defmacro16 int-lt
+  (lambda (x y)
+    (if (= (high x) (high y))
+	(if< (low x) (low y) K KI)
+	(if< (high x) (high y) K KI))))
+
+(defmacro24 int-lt
   (lambda (x y)
     (if (= (high x) (high y))
 	(if (= (mid x) (mid y))
@@ -75,7 +118,15 @@
 	(if< (high x) (high y) K KI))))
 
 ;; for debug
-(defmacro print-int
+(defmacro16 print-int
+  (lambda (n)
+    (S (print-digit (high n))
+       (S #\space
+	  (S (print-digit (low n))
+	     #\newline))
+       I)))
+
+(defmacro24 print-int
   (lambda (n)
     (S (print-digit (high n))
        (S #\space
@@ -112,21 +163,35 @@
 	  (cons ((cons1-length n) (cons zero-page) nil) nil))
       (cons nil data)))
 
-(defmacro (initialize-memory data)
+(defmacro16 (initialize-memory data)
+  (car (initialize-lines (to-cons1 c256) data)))
+
+(defmacro24 (initialize-memory data)
   (car (initialize-pages (to-cons1 c256) data)))
 
-(defmacro load16
+(defmacro16 load
   (lambda (mem addr)
     (nth (low addr)
 	 (nth (high addr) mem))))
 
-(defmacro load24
+(defmacro24 load
   (lambda (mem addr)
     (nth (low addr)
 	 (nth (mid addr)
 	      (nth (high addr) mem)))))
 
-(defmacro store24
+(defmacro16 store
+  (lambda (mem addr val)
+    (update-nth
+     (lambda (line)
+       (update-nth
+	(lambda (oldval) val)
+	(low addr)
+	line))
+     (high addr)
+     mem)))
+
+(defmacro24 store
   (lambda (mem addr val)
     (update-nth
      (lambda (page)
@@ -147,16 +212,16 @@
   (lambda (code initial-vm)
     (let rec ((vm initial-vm))
       (let* ((pc (vm-pc vm))
-	     (f (load24 code pc)))
+	     (f (load code pc)))
 	(rec (f (set-pc vm (int-inc pc))))))))
 
 ; Runtime library ----------------------------------------------------
 
 (defmacro (mem-load vm addr)
-  (load24 (vm-memory vm) addr))
+  (load (vm-memory vm) addr))
 
 (defmacro (mem-store vm addr val)
-  (set-memory vm (store24 (vm-memory vm) addr val)))
+  (set-memory vm (store (vm-memory vm) addr val)))
 
 ;; TODO: make putc / getc 8-bit clean
 (add-unl-macro! 'putc-table '()

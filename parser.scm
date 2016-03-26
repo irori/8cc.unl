@@ -1,15 +1,12 @@
 (define-module parser
   (use srfi-13)
   (use gauche.sequence)
-  (export vm-bits parse)
+  (export bfs24? vm-bits parse)
   )
 (select-module parser)
 
-(define vm-bits
-  (let ((bits (sys-getenv "BITLENGTH")))
-    (cond (bits (string->number bits))
-	  ((sys-getenv "BFS24") 24)
-	  (else 16))))
+(define bfs24? (if (sys-getenv "BFS24") #t #f))
+(define vm-bits (if bfs24? 24 16))
 
 (define UINT_MAX (- (ash 1 vm-bits) 1))
 (define INT_MIN (- (ash 1 (- vm-bits 1))))

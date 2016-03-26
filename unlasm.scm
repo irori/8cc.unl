@@ -7,25 +7,42 @@
   (use unlc)
   (use lib)
   (use srfi-1)
-  (export vm-number generate)
+  (export defmacro16 defmacro24 vm-number generate)
   )
 (select-module unlasm)
 
+(define-macro (defmacro16 name-args body)
+  (if (not bfs24?)
+      `(defmacro ,name-args ,body)))
+
+(define-macro (defmacro24 name-args body)
+  (if bfs24?
+      `(defmacro ,name-args ,body)))
+
 ;; Integer -----------------------------------------------------------
 
-(defmacro make-int (lambda (lo mi hi f) (f lo mi hi)))
-(defmacro make-byte (lambda (b f) (f b c0 c0)))
-(defmacro (inline-int lo mi hi) (lambda (f) (f lo mi hi)))
-(defmacro (low n)  (n (lambda (x _ _) x)))
-(defmacro (mid n)  (n (lambda (_ x _) x)))
-(defmacro (high n) (n (lambda (_ _ x) x)))
-(defmacro int-0 (inline-int c0 c0 c0))
+(defmacro16 make-int (lambda (lo hi f) (f lo hi)))
+(defmacro16 make-byte (lambda (b f) (f b c0)))
+(defmacro16 (inline-int lo hi) (lambda (f) (f lo hi)))
+(defmacro16 (low n)  (n (lambda (x _) x)))
+(defmacro16 (high n) (n (lambda (_ x) x)))
+(defmacro16 int-0 (inline-int c0 c0))
+
+(defmacro24 make-int (lambda (lo mi hi f) (f lo mi hi)))
+(defmacro24 make-byte (lambda (b f) (f b c0 c0)))
+(defmacro24 (inline-int lo mi hi) (lambda (f) (f lo mi hi)))
+(defmacro24 (low n)  (n (lambda (x _ _) x)))
+(defmacro24 (mid n)  (n (lambda (_ x _) x)))
+(defmacro24 (high n) (n (lambda (_ _ x) x)))
+(defmacro24 int-0 (inline-int c0 c0 c0))
 
 (define (vm-number n)
   (cons 'inline-int
 	(map (lambda (sft)
 	       (churchnum (logand #xff (ash n sft))))
-	     (list 0 -8 -16))))
+	     (if bfs24?
+		 (list 0 -8 -16)
+		 (list 0 -8)))))
 
 ; VM state -----------------------------------------------------------
 
