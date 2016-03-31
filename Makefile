@@ -16,7 +16,7 @@ out/unl: unl/unl.c
 out/libf.h:
 	wget $(LIBF_URL) -O $@.tmp && mv $@.tmp $@
 
-out/8cc.c: merge_8cc.sh out/libf.h
+out/8cc.c: merge_8cc.sh out/libf.h 8cc/README.md
 	./merge_8cc.sh > $@.tmp && mv $@.tmp $@
 
 out/8cc.bfs: out/8cc.c 8cc/8cc
