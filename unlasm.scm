@@ -131,7 +131,7 @@
 	     (let ((val `(,cmp vm ,(if flip? rhs lhs) ,(if flip? lhs rhs))))
 	       `(set-reg vm ,dst
 			 (cons ,(if not? `(bit-not ,val) val)
-			       (c15 (cons KI) nil)))))))
+			       (vm-bits-1 (cons KI) nil)))))))
 	((eq? op 'load)
 	 (let ((dst (regpos (first args)))
 	       (addr (generate-reg-or-simm (second args))))
