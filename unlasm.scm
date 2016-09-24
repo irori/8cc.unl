@@ -50,7 +50,7 @@
 
 (defmacro (vm-regs vm) (car vm))
 (defmacro (set-reg vm regno val)
-  (replace-car vm (update-nth (K val) regno (vm-regs vm))))
+  (replace-car vm (replace-nth val regno (vm-regs vm))))
 (defmacro (vm-memory vm) (cadr vm))
 (defmacro (set-memory vm mem) (cons (car vm)
 				    (cons mem (cddr vm))))
