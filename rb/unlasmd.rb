@@ -53,15 +53,6 @@ class UnlAsmDirect < UnlAsmBase
     emit("v")
   end
 
-  def emit_le_0
-    emit_tick(2)
-    emit_churchnum(BITS)
-    emit_tick(1)
-    emit(CONS)
-    emit("`ki")
-    emit("v")
-  end
-
   def emit_churchnum(n)
     s = CNTBL[n] or raise "churchnum(#{n}) is not in the table"
     emit(s)
@@ -222,9 +213,7 @@ class UnlAsmDirect < UnlAsmBase
     emit("`k")
     emit_tick(2)
     emit_churchnum(BITS - 1)
-    emit_tick(1)
-    emit(CONS)
-    emit("`ki")
+    emit(CONS_KI)
     emit("v")
   end
 
@@ -374,7 +363,7 @@ class UnlAsmDirect < UnlAsmBase
     emit_churchnum(256)
     emit_tick(1)
     emit(CONS)
-    emit_le_0  # TODO: emit_number2(0) is smaller
+    emit_number2(0)
     emit_list(@data) {|x, addr| emit_number2(x)}
   end
 end

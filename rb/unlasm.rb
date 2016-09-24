@@ -31,10 +31,6 @@ class UnlAsm < UnlAsmBase
     code.push("v")
   end
 
-  def le_0
-    cap(churchnum(BITS), cap(CONS, "`ki"), "v")
-  end
-
   def churchnum(n)
     CNTBL[n] or raise "churchnum(#{n}) is not in the table"
   end
@@ -190,22 +186,22 @@ class UnlAsm < UnlAsmBase
       ap2(lib_lt(reg_or_simm(args[1]), reg_or_simm(args[2])), :var, jumped)
     when :eq
       cmp = lib_eq(reg_or_simm(args[0]), reg_or_simm(args[1]))
-      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), cap(CONS, "`ki"), "v")))
+      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), CONS_KI, "v")))
     when :ne
       cmp = bit_not(lib_eq(reg_or_simm(args[0]), reg_or_simm(args[1])))
-      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), cap(CONS, "`ki"), "v")))
+      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), CONS_KI, "v")))
     when :lt
       cmp = lib_lt(reg_or_simm(args[0]), reg_or_simm(args[1]))
-      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), cap(CONS, "`ki"), "v")))
+      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), CONS_KI, "v")))
     when :gt
       cmp = lib_lt(reg_or_simm(args[1]), reg_or_simm(args[0]))
-      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), cap(CONS, "`ki"), "v")))
+      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), CONS_KI, "v")))
     when :le
       cmp = bit_not(lib_lt(reg_or_simm(args[1]), reg_or_simm(args[0])))
-      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), cap(CONS, "`ki"), "v")))
+      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), CONS_KI, "v")))
     when :ge
       cmp = bit_not(lib_lt(reg_or_simm(args[0]), reg_or_simm(args[1])))
-      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), cap(CONS, "`ki"), "v")))
+      set_reg(args[0], ap2(CONS, cmp, cap(churchnum(BITS - 1), CONS_KI, "v")))
     when :load
       set_reg(args[0], lib_load(reg_or_simm(args[1])))
     when :store
@@ -240,7 +236,7 @@ class UnlAsm < UnlAsmBase
 
   def emit_data
     cap(churchnum(256),
-        cap(CONS, le_0),
+        cap(CONS, le_number2(0)),
         generate_list(@data.map{|x, addr| le_number2(x)})).flatten.join('')
   end
 end
