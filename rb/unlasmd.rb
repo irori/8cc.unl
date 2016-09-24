@@ -1,38 +1,8 @@
 #!/usr/bin/env ruby
 
-require './bfs'
+require './base'
 
-# Church numbers
-CNTBL = [
-  "`ki",
-  "i",
-  "``s``s`kski",
-  "```ss``ss`ki``s`ksk",
-  "``ci``s``s`kski",
-  "``s``s`ksk``ci``s``s`kski",
-  "```ss``ss`k``ci``s``s`kski``s`ksk",
-  "```ss``ss``ss`k``ci``s``s`kski``s`ksk",
-  "```s``s`ksk`ci``s``s`kski",
-  "````ss`ss``ss`ki``s`ksk",
-  "```ss```ss`ss``ss`ki``s`ksk", # 10
-  "```ss``ss```ss`ss``ss`ki``s`ksk",
-  "```ss``ss``ss```ss`ss``ss`ki``s`ksk",
-  "```ss``ss``ss``ss```ss`ss``ss`ki``s`ksk",
-  "```ss``ss``ss``ss``ss```ss`ss``ss`ki``s`ksk",
-  "```ss``ss``ss``ss``ss``ss```ss`ss``ss`ki``s`ksk",
-  "```s`cii``s``s`kski",
-  "``s``s`ksk```s`cii``s``s`kski",
-  "```ss``ss`k```s`cii``s``s`kski``s`ksk",
-  "```ss``ss``ss`k```s`cii``s``s`kski``s`ksk",
-  "````sss``s`ksk``ci``s``s`kski", # 20
-  "```ss``s``sss`k``ci``s``s`kski``s`ksk",
-  "```ss``ss``s``sss`k``ci``s``s`kski``s`ksk",
-  "```ss``ss``ss``s``sss`k``ci``s``s`kski``s`ksk",
-  "```s``si``s`ci`k`s``s`ksk``s`cii``s``s`kski",
-]
-CNTBL[256] = "``ci``ci``s``s`kski"
-
-class UnlAsm < BFAsm
+class UnlAsmDirect < UnlAsmBase
   def emit(s)
     print(s)
   end
@@ -52,11 +22,6 @@ class UnlAsm < BFAsm
     emit("v")
   end
 
-  def regpos(r)
-    {:pc => 0, :a => 1, :b => 2, :c => 3, :d => 4, :bp => 5, :sp => 6}[r] or
-      raise "unknown reg: #{r}"
-  end
-
   def emit_number(n)
     emit_list(0...BITS) do |b|
       if (n & 1 << b).zero?
@@ -67,8 +32,6 @@ class UnlAsm < BFAsm
     end
   end
 
-  CONS_KI = "``s`k`s``si`k`kik"
-  CONS_K = "``s`k`s``si`kkk"
   def emit_number2(n)
     (0..BITS).each do |b|
       if b + 1 < BITS && (1 << b) > n
@@ -104,11 +67,6 @@ class UnlAsm < BFAsm
     emit(s)
   end
 
-  CAR = "``si`kk"
-  CDR = "``si`k`ki"
-  DOTCAR = "k"
-  DOTCDR = "`ki"
-
   def emit_nth(n)
     # TODO: optimize for small |n|
     emit("``s")
@@ -136,9 +94,6 @@ class UnlAsm < BFAsm
       emit(CAR) # vm_regs
     }
   end
-
-  APPLY_CDR = "``s`k`si``s`kk``s`k`s``s`ks``s`kk``s`ks``s`k`sik``s`kk`s`kk"
-  REPLACE_CAR_FLIP = "``s`k`si``s`kk``s`kk``s`k`s``s`k`s``s`ks``s`k`sik``s`kkkk"
 
   def emit_lib_inc
     emit("``s")
@@ -210,9 +165,6 @@ class UnlAsm < BFAsm
       emit_number(reg_or_imm)
     end
   end
-
-  REPLACE_CAR = "``s`k`s``s``s`ks``s`kk``s`ks``s`k`sik`kk``s``s`ksk`k`k`ki"
-  CONS = "``s``s`ks``s`kk``s`ks``s`k`sik`kk"
 
   def emit_setreg(reg)
     emit("``s")
@@ -402,8 +354,6 @@ class UnlAsm < BFAsm
     end
   end
 
-  COMPOSE = "``s`ksk"
-
   def emit_chunk(chunk)
     (chunk.size-1).downto(0) do |i|
       op, *args, lineno = chunk[i]
@@ -430,7 +380,7 @@ class UnlAsm < BFAsm
 end
 
 if __FILE__ == $0
-  unla = UnlAsm.new
+  unla = UnlAsmDirect.new
   code, data = unla.parse(File.read(ARGV[0]))
   puts "``"
   puts "# VM core"
