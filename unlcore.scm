@@ -179,6 +179,11 @@
     (run (initialize-memory code) (initial-vm data))))
 
 (define (main args)
+  (if (equal? (cdr args) '("--generate-core"))
+      (begin
+	(print-as-unl 'main)
+	(newline)
+	(exit)))
   (let ((parsed (parse)))
     (print "``")
     (print "# VM core")

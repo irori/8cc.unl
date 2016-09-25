@@ -246,7 +246,7 @@ if __FILE__ == $0
   code, data = unla.parse(File.read(ARGV[0]))
   puts "``"
   puts "# VM core"
-  puts IO.read('vmcore.unl')
+  puts IO.read("core#{BITS}.unl")
   puts "# instructions"
   puts unla.emit
   puts "# data"

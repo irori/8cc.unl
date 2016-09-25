@@ -282,7 +282,7 @@
     val)))
 
 ;; Church number
-(load "./churchnum.tbl")
+(load "churchnum.tbl")
 
 (define (churchnum n)
   (if (< n 0)
