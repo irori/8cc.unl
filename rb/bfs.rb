@@ -117,9 +117,14 @@ class BFAsm
       lineno += 1
 
       # TODO: Weird!
-      line.sub!(/(^#| # ).*/, '')
+      line.sub!(/(^#|\s# ).*/, '')
       line.strip!
       next if line.empty?
+
+      if line =~ /^\.set\s+(\w+)\s*,\s*(.+)/
+        @labels[$1] = @labels[$2] || Integer($2)
+        next
+      end
 
       if line =~ /^\.(text|data)/
         in_data = $1 == 'data'
@@ -159,12 +164,12 @@ class BFAsm
           size.times{
             add_data(0)
           }
-        elsif line =~ /^\.string (".*")/
-          str = eval($1)
+        elsif line =~ /^\.(ascii|string) (".*")/
+          str = eval($2)
           str.each_byte{|b|
             add_data(b)
           }
-          add_data(0)
+          add_data(0) if $1 == 'string'
         else
           raise "unknown data at line #{lineno}"
         end
