@@ -80,12 +80,10 @@ class UnlAsm < UnlAsmBase
 
   def replace_nth(val, n)
     if lambda?(val)
-      ap(cap(churchnum(n), APPLY_CDR), ap(REPLACE_CAR_FLIP, val))
+      ap(cap(churchnum(n), APPLY_CDR), ap(REPLACE_CAR, val))
     else
       # This returns constant expr, not lambda!
-      cap(churchnum(n), APPLY_CDR,
-          ["``si`k`k``s``s`k`s``s`ks``s`k`sik``s`kkk`k", val])
-      #cap(cap(churchnum(n), APPLY_CDR), cap(REPLACE_CAR_FLIP, val))
+      cap(churchnum(n), APPLY_CDR, [REPLACE_CAR1, val])
     end
   end
 

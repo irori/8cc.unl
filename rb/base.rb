@@ -31,16 +31,30 @@ CNTBL = [
 CNTBL[256] = "``ci``ci``s``s`kski"
 
 class UnlAsmBase < BFAsm
-  CONS_KI = "``s`k`s``si`k`kik"
-  CONS_K = "``s`k`s``si`kkk"
+  S2 = "``s"
+  K1 = "`k"
+  CONS = "``s``s`ks``s`kk``s`ks``s`k`sik`kk"
   CAR = "``si`kk"
   CDR = "``si`k`ki"
-  DOTCAR = "k"
-  DOTCDR = "`ki"
+  DOTCAR = "k"   # (x DOTCAR) = (CAR x)
+  DOTCDR = "`ki" # (x DOTCDR) = (CDR x)
+
+  # (CONS_KI x) = (cons (K I) x)
+  CONS_KI = "``s`k`s``si`k`kik"
+
+  # (CONS_K x) = (cons K x)
+  CONS_K = "``s`k`s``si`kkk"
+
+  # (APPLY_CDR f lst) = (cons (car lst) (f (cdr lst)))
   APPLY_CDR = "``s`k`si``s`kk``s`k`s``s`ks``s`kk``s`ks``s`k`sik``s`kk`s`kk"
-  REPLACE_CAR_FLIP = "``s`k`si``s`kk``s`kk``s`k`s``s`k`s``s`ks``s`k`sik``s`kkkk"
-  REPLACE_CAR = "``s`k`s``s``s`ks``s`kk``s`ks``s`k`sik`kk``s``s`ksk`k`k`ki"
-  CONS = "``s``s`ks``s`kk``s`ks``s`k`sik`kk"
+
+  # (REPLACE_CAR x lst) = (cons x (cdr lst))
+  REPLACE_CAR = "``s`k`si``s`kk``s`kk``s`k`s``s`k`s``s`ks``s`k`sik``s`kkkk"
+
+  # ([REPLACE_CAR1 + <expr>] lst) = (cons <expr> (cdr lst))
+  REPLACE_CAR1 = "``si`k`k``s``s`k`s``s`ks``s`k`sik``s`kkk`k"
+
+  # (COMPOSE f g x) = (f (g x))
   COMPOSE = "``s`ksk"
 
   def regpos(r)

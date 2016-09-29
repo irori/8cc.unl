@@ -47,7 +47,7 @@ class UnlAsmDirect < UnlAsmBase
       else
         emit("``s``si`k")
         emit((n & 1 << b) == 0 ? "`ki" : "k")
-        emit("`k") if b + 1 < BITS
+        emit(K1) if b + 1 < BITS
       end
     end
     emit("v")
@@ -60,23 +60,23 @@ class UnlAsmDirect < UnlAsmBase
 
   def emit_nth(n)
     # TODO: optimize for small |n|
-    emit("``s")
-    emit("``s")
-    emit("`k")
+    emit(S2)
+    emit(S2)
+    emit(K1)
     emit("`")
     emit_churchnum(n)
     emit(CDR)
     yield
-    emit("`k")
+    emit(K1)
     emit(DOTCAR)
   end
 
   def emit_lib(n)
-    emit("``s")
+    emit(S2)
     emit("`")
     emit_churchnum(n)
     emit(CDR)
-    emit("`k")
+    emit(K1)
     emit(DOTCAR)
   end
 
@@ -87,63 +87,63 @@ class UnlAsmDirect < UnlAsmBase
   end
 
   def emit_lib_inc
-    emit("``s")
+    emit(S2)
     emit_lib(2)
   end
 
   def emit_lib_dec
-    emit("``s")
+    emit(S2)
     emit_lib(3)
   end
 
   def emit_lib_add
-    emit("``s")
-    emit("``s")
+    emit(S2)
+    emit(S2)
     emit_lib(4)
   end
 
   def emit_lib_sub
-    emit("``s")
-    emit("``s")
+    emit(S2)
+    emit(S2)
     emit_lib(5)
   end
 
   def emit_lib_eq
-    emit("``s")
-    emit("``s")
+    emit(S2)
+    emit(S2)
     emit_lib(6)
   end
 
   def emit_lib_lt
-    emit("``s")
-    emit("``s")
+    emit(S2)
+    emit(S2)
     emit_lib(7)
   end
 
   def emit_lib_load
-    emit("``s")
+    emit(S2)
 
-    emit("``s")
+    emit(S2)
     emit_lib(8)
     emit("i")
   end
 
   def emit_lib_store
-    emit("``s")
-    emit("``s")
+    emit(S2)
+    emit(S2)
 
-    emit("``s")
+    emit(S2)
     emit_lib(9)
     emit("i")
   end
 
   def emit_lib_putc
-    emit("``s")
+    emit(S2)
     emit_lib(10)
   end
 
   def emit_lib_getc
-    emit("``s")
+    emit(S2)
     emit("`kc")
     emit_lib(11)
   end
@@ -152,26 +152,26 @@ class UnlAsmDirect < UnlAsmBase
     if sym?(reg_or_imm)
       emit_getreg(reg_or_imm)
     else
-      emit("`k")
+      emit(K1)
       emit_number(reg_or_imm)
     end
   end
 
   def emit_setreg(reg)
-    emit("``s")
-    emit("``s")
-    emit("`k")
+    emit(S2)
+    emit(S2)
+    emit(K1)
     emit(CONS)
-    emit("``s")
+    emit(S2)
 
-    emit("``s")
-    emit("`k")
+    emit(S2)
+    emit(K1)
     emit_tick(1)
     emit_churchnum(regpos(reg))
     emit(APPLY_CDR)
-    emit("``s")
-    emit("`k")
-    emit(REPLACE_CAR_FLIP)
+    emit(S2)
+    emit(K1)
+    emit(REPLACE_CAR)
     yield
 
     emit(CAR)
@@ -179,17 +179,17 @@ class UnlAsmDirect < UnlAsmBase
   end
 
   def emit_setreg_imm(reg, n)
-    emit("``s")
-    emit("``s")
-    emit("`k")
+    emit(S2)
+    emit(S2)
+    emit(K1)
     emit(CONS)
-    emit("``s")
+    emit(S2)
 
-    emit("`k")
+    emit(K1)
     emit_tick(2)
     emit_churchnum(regpos(reg))
     emit(APPLY_CDR)
-    emit("``si`k`k``s``s`k`s``s`ks``s`k`sik``s`kkk`k")
+    emit(REPLACE_CAR1)
     emit_number(n)
 
     emit(CAR)
@@ -205,12 +205,12 @@ class UnlAsmDirect < UnlAsmBase
   end
 
   def emit_bool_to_number
-    emit("``s")
-    emit("``s")
-    emit("`k")
+    emit(S2)
+    emit(S2)
+    emit(K1)
     emit(CONS)
     yield
-    emit("`k")
+    emit(K1)
     emit_tick(2)
     emit_churchnum(BITS - 1)
     emit(CONS_KI)
@@ -258,8 +258,8 @@ class UnlAsmDirect < UnlAsmBase
       emit_jmp(args[0])
 
     when :jeq, :jne, :jlt, :jgt, :jle, :jge
-      emit("``s")
-      emit("``s")
+      emit(S2)
+      emit(S2)
 
       if op == :jeq || op == :jne
         emit_lib_eq
@@ -287,8 +287,8 @@ class UnlAsmDirect < UnlAsmBase
       emit_setreg(args[0]) {
         emit_bool_to_number {
           if [:ne, :le, :ge].include?(op)
-            emit("``s")
-            emit("``s")
+            emit(S2)
+            emit(S2)
           end
 
           if op == :eq || op == :ne
@@ -324,7 +324,7 @@ class UnlAsmDirect < UnlAsmBase
       emit_value(args[0])
 
     when :putc
-      emit("``s")
+      emit(S2)
       emit("k")
       emit_lib_putc
       emit_value(args[0])
