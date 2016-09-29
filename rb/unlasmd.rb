@@ -33,7 +33,7 @@ class UnlAsmDirect < UnlAsmBase
   end
 
   def emit_number2(n)
-    (0..BITS).each do |b|
+    (0...BITS).each do |b|
       if b + 1 < BITS && (1 << b) > n
         emit("``")
         emit_churchnum(BITS - b)

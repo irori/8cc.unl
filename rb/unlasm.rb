@@ -16,7 +16,7 @@ class UnlAsm < UnlAsmBase
 
   def le_number2(n)
     code = []
-    (0..BITS).each do |b|
+    (0...BITS).each do |b|
       if b + 1 < BITS && (1 << b) > n
         code.push("``", churchnum(BITS - b), CONS_KI)
         break
