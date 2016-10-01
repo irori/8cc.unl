@@ -229,13 +229,43 @@ class UnlAsm < UnlAsmBase
   end
 
   def emit
-    generate_list(@code.map{|chunk| generate_chunk(chunk)}).flatten.join('')
+    generate_list(@code.map{|chunk| generate_chunk(chunk)}).flatten.join
   end
 
   def emit_data
     cap(churchnum(256),
         cap(CONS, le_number2(0)),
-        generate_list(@data.map{|x, addr| le_number2(x)})).flatten.join('')
+        generate_list(@data.map{|x, addr| le_number2(x)})).flatten.join
+  end
+
+  def emit_chr(n)
+    n == 10 ? "r" : "." + n.chr
+  end
+
+  def putc_func(n, b)
+    if b == 1 << 7
+      ["``s``s`ks``s``s`ksk`k`k", emit_chr(n | b), "`k`k", emit_chr(n)]
+    else
+      ["``s`k`si``s``s`ks``s``s`ksk",
+       "`k`k", putc_func(n | b, b << 1),
+       "`k`k", putc_func(n, b << 1)]
+    end
+  end
+
+  def emit_putc
+    unlambda(ap2(:var, putc_func(0, 1), "i"))
+  end
+
+  def emit_getc
+    cap("`s`d`@k",
+        unlambda((" ".."~").to_a.reverse.push("\n", "\t").inject(ap(:var, le_number2(0))) {|e, ch|
+                   ap(ap2(cap("d", cap("?" + ch, "i")), :var, le_number2(ch.ord)),
+                      e)
+                 }))
+  end
+
+  def emit_libs
+    generate_list([emit_putc, emit_getc]).flatten.join
   end
 end
 
@@ -244,7 +274,8 @@ if __FILE__ == $0
   code, data = unla.parse(File.read(ARGV[0]))
   puts "``"
   puts "# VM core"
-  puts IO.read("core#{BITS}.unl")
+  print IO.binread("core#{BITS}.unl")
+  puts unla.emit_libs
   puts "# instructions"
   puts unla.emit
   puts "# data"

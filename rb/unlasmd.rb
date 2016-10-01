@@ -366,6 +366,55 @@ class UnlAsmDirect < UnlAsmBase
     emit_number2(0)
     emit_list(@data) {|x, addr| emit_number2(x)}
   end
+
+  def emit_print_char(n)
+    emit(n == 10 ? "r" : "." + n.chr)
+  end
+
+  def emit_putc_rec(n, b)
+    if b == 1 << 7
+      emit("``s``s`ks``s``s`ksk`k`k")
+      emit_print_char(n | b)
+      emit("`k`k")
+      emit_print_char(n)
+    else
+      emit("``s`k`si``s``s`ks``s``s`ksk")
+      emit("`k`k")
+      emit_putc_rec(n | b, b << 1)
+      emit("`k`k")
+      emit_putc_rec(n, b << 1)
+    end
+  end
+
+  def emit_putc
+    emit(S2)
+    emit(S2)
+    emit("i")
+    emit(K1)
+    emit_putc_rec(0, 1)
+    emit("`ki")
+  end
+
+  def emit_getc
+    emit("``s`d`@k")
+    chars = (" ".."~").to_a.reverse.push("\n", "\t").reverse
+    chars.each do |ch|
+      emit(S2)
+      emit(S2)
+      emit("`d")
+      emit("`?#{ch}i")
+      emit(K1)
+      emit_number2(ch.ord)
+    end
+    emit(S2)
+    emit("i")
+    emit(K1)
+    emit_number2(0)
+  end
+
+  def emit_libs
+    emit_list([:emit_putc, :emit_getc]) {|f| self.send(f)}
+  end
 end
 
 if __FILE__ == $0
@@ -373,7 +422,9 @@ if __FILE__ == $0
   code, data = unla.parse(File.read(ARGV[0]))
   puts "``"
   puts "# VM core"
-  puts IO.read("core#{BITS}.unl")
+  print IO.read("core#{BITS}.unl")
+  unla.emit_libs
+  puts
   puts "# instructions"
   unla.emit_code
   puts

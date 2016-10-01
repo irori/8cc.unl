@@ -147,20 +147,22 @@
 		     ,(putc-func (cons #f bits))))))))
 
 (add-unl-macro! 'putc '(n) `(n ,(putc-func '()) I))
-   
+
 (add-unl-macro! 'getc '()
   `(lambda (cont)
      (@ I
-	(,@(map (lambda (i)
-		  `((? ,(integer->char i)) I cont ,(le-number2 i)))
-		(filter
-		 (lambda (i)
-		   (let ((c (integer->char i)))
-		     (or (char-whitespace? c) (not (eq? (char-general-category c) 'Cc)))))
-		 (iota 128)))
-	 (cont le-0)))))
+	,(fold-right
+	  (lambda (i rest)
+	    `(((? ,(integer->char i)) I cont ,(le-number i))
+	      ,rest))
+	  '(cont le-0)
+	  (filter
+	   (lambda (i)
+	     (let ((c (integer->char i)))
+	       (or (char-whitespace? c) (not (eq? (char-general-category c) 'Cc)))))
+	   (iota 128))))))
 
-(defmacro lib (list le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store putc getc))
+(defmacro lib (cons* le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store ""))
 
 (defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
 			  (lambda (vm) (K vm (print-le (lib-load vm vm be-1))))
@@ -182,7 +184,6 @@
   (if (equal? (cdr args) '("--generate-core"))
       (begin
 	(print-as-unl 'main)
-	(newline)
 	(exit)))
   (let ((parsed (parse)))
     (print "``")
