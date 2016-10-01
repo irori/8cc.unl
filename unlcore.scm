@@ -162,7 +162,8 @@
 	       (or (char-whitespace? c) (not (eq? (char-general-category c) 'Cc)))))
 	   (iota 128))))))
 
-(defmacro lib (cons* le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store ""))
+(defmacro all-libs (cons* le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store putc getc))
+(defmacro core-libs (cons* le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store ""))
 
 (defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
 			  (lambda (vm) (K vm (print-le (lib-load vm vm be-1))))
@@ -171,24 +172,24 @@
 			  (lambda (vm) (K vm (print-le (vm-pc vm))))
 			  (lambda (vm) (exit I))))
 
-(defmacro (initial-vm data)
+(defmacro (initial-vm data lib)
   (cons initial-regs
 	(cons (initialize-memory data)
 	      lib)))
 
-(defmacro main
+(defmacro (main lib)
   (lambda (code data)
-    (run (initialize-memory code) (initial-vm data))))
+    (run (initialize-memory code) (initial-vm data lib))))
 
 (define (main args)
   (if (equal? (cdr args) '("--generate-core"))
       (begin
-	(print-as-unl 'main)
+	(print-as-unl '(main core-libs))
 	(exit)))
   (let ((parsed (parse)))
     (print "``")
     (print "# VM core")
-    (print-as-unl 'main)
+    (print-as-unl '(main all-libs))
     (newline)
     (generate (car parsed) (cadr parsed))
     0))
