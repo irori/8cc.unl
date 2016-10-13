@@ -79,18 +79,12 @@
 (defmacro (le-lt xs ys) (le-lt-rec xs ys KI))
 
 (defrecmacro (le-inc xs)
-  (if (pair? xs)
-      (if ((car xs) I V)
-	  (cons KI (le-inc (cdr xs)))
-	  (cons K (cdr xs)))
-      nil))
+  (xs (icons (lambda (tl) (cons KI (le-inc tl)))
+	     (icons K))))
 
 (defrecmacro (le-dec xs)
-  (if (pair? xs)
-      (if ((car xs) I V)
-	  (cons KI (cdr xs))
-	  (cons K (le-dec (cdr xs))))
-      nil))
+  (xs (icons (icons KI)
+	     (lambda (tl) (cons K (le-dec tl))))))
 
 ;; for debug
 (defrecmacro (le->number xs)
