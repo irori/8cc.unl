@@ -10,36 +10,49 @@
 
 ;; little endian binary number ---------------------------------------
 
-(defmacro xor3-table
+(defmacro add-table
   (icons
-   (icons (icons K KI) (icons KI K))
-   (icons (icons KI K) (icons K KI))))
-
-(defmacro carry-table
-  (icons
-   (icons (icons K K) (icons K KI))
-   (icons (icons K KI) (icons KI KI))))
-
-(defmacro borrow-table
-  (icons
-   (icons (icons K KI) (icons KI KI))
-   (icons (icons K K) (icons K KI))))
+   (icons
+    (icons
+     (lambda (rest) ((icons K) (rest K)))
+     (lambda (rest) ((icons KI) (rest K))))
+    (icons
+     (lambda (rest) ((icons KI) (rest K)))
+     (lambda (rest) ((icons K) (rest KI)))))
+   (icons
+    (icons
+     (lambda (rest) ((icons KI) (rest K)))
+     (lambda (rest) ((icons K) (rest KI))))
+    (icons
+     (lambda (rest) ((icons K) (rest KI)))
+     (lambda (rest) ((icons KI) (rest KI)))))))
 
 (defrecmacro (le-add-rec xs ys carry)
-  (if (pair? xs)
-      (cons (xor3-table (car xs) (car ys) carry)
-	    (le-add-rec (cdr xs) (cdr ys)
-			(carry-table (car xs) (car ys) carry)))
-      nil))
+  (add-table (car xs) (car ys) carry
+	     (le-add-rec (cdr xs) (cdr ys))))
 
 (defmacro (le-add xs ys) (le-add-rec xs ys KI))
 
+(defmacro sub-table
+  (icons
+   (icons
+    (icons
+     (lambda (rest) ((icons K) (rest K)))
+     (lambda (rest) ((icons KI) (rest KI))))
+    (icons
+     (lambda (rest) ((icons KI) (rest KI)))
+     (lambda (rest) ((icons K) (rest KI)))))
+   (icons
+    (icons
+     (lambda (rest) ((icons KI) (rest K)))
+     (lambda (rest) ((icons K) (rest K))))
+    (icons
+     (lambda (rest) ((icons K) (rest K)))
+     (lambda (rest) ((icons KI) (rest KI)))))))
+
 (defrecmacro (le-sub-rec xs ys borrow)
-  (if (pair? xs)
-      (cons (xor3-table (car xs) (car ys) borrow)
-	    (le-sub-rec (cdr xs) (cdr ys)
-			(borrow-table (car xs) (car ys) borrow)))
-      nil))
+  (sub-table (car xs) (car ys) borrow
+	     (le-sub-rec (cdr xs) (cdr ys))))
 
 (defmacro (le-sub xs ys) (le-sub-rec xs ys KI))
 
@@ -50,6 +63,11 @@
 	  KI
 	  (le-eq (cdr xs) (cdr ys)))
       K))
+
+(defmacro borrow-table
+  (icons
+   (icons (icons K KI) (icons KI KI))
+   (icons (icons K K) (icons K KI))))
 
 ;; returns K(true) or KI(false)
 (defrecmacro (le-lt-rec xs ys borrow)
