@@ -60,6 +60,10 @@
 (defmacro (set-pc vm pc)
   (replace-car vm (replace-car (vm-regs vm) pc)))
 
+(defmacro (inc-pc vm incf)
+  (cons (cons (incf (car (car vm))) (cdr (car vm)))
+	(cdr vm)))
+
 ;; VM's third element and later are library routines.
 (defmacro lib-inc (nth c2))
 (defmacro lib-dec (nth c3))

@@ -66,8 +66,8 @@
 
 (defmacro borrow-table
   (icons
-   (icons (icons K KI) (icons KI KI))
-   (icons (icons K K) (icons K KI))))
+   (icons I (K KI))
+   (icons (K K) I)))
 
 ;; returns K(true) or KI(false)
 (defrecmacro (le-lt-rec xs ys borrow)
@@ -143,9 +143,7 @@
 (defmacro run
   (lambda (code initial-vm)
     (let rec ((vm initial-vm))
-      (let* ((pc (vm-pc vm))
-	     (f (load-le code pc)))
-	(rec (f (set-pc vm (le-inc pc))))))))
+      (rec ((load-le code (vm-pc vm)) (inc-pc vm le-inc))))))
 
 ; Runtime library ----------------------------------------------------
 
