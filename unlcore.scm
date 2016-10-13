@@ -8,27 +8,37 @@
 
 (use srfi-60)
 
-(defmacro (bit-or x y) (x K y))
-(defmacro (bit-and x y) (x y KI))
-(defmacro (bit-xor x y) (x (bit-not y) y))
-(defmacro (bit-xor3 x y z) (bit-xor (bit-xor x y) z))
-
 ;; little endian binary number ---------------------------------------
+
+(defmacro xor3-table
+  (icons
+   (icons (icons K KI) (icons KI K))
+   (icons (icons KI K) (icons K KI))))
+
+(defmacro carry-table
+  (icons
+   (icons (icons K K) (icons K KI))
+   (icons (icons K KI) (icons KI KI))))
+
+(defmacro borrow-table
+  (icons
+   (icons (icons K KI) (icons KI KI))
+   (icons (icons K K) (icons K KI))))
 
 (defrecmacro (le-add-rec xs ys carry)
   (if (pair? xs)
-      (cons (bit-xor3 (car xs) (car ys) carry)
+      (cons (xor3-table (car xs) (car ys) carry)
 	    (le-add-rec (cdr xs) (cdr ys)
-			((carry bit-or bit-and) (car xs) (car ys))))
+			(carry-table (car xs) (car ys) carry)))
       nil))
 
 (defmacro (le-add xs ys) (le-add-rec xs ys KI))
 
 (defrecmacro (le-sub-rec xs ys borrow)
   (if (pair? xs)
-      (cons (bit-xor3 (car xs) (car ys) borrow)
+      (cons (xor3-table (car xs) (car ys) borrow)
 	    (le-sub-rec (cdr xs) (cdr ys)
-			(((car xs) bit-and bit-or) (car ys) borrow)))
+			(borrow-table (car xs) (car ys) borrow)))
       nil))
 
 (defmacro (le-sub xs ys) (le-sub-rec xs ys KI))
@@ -36,7 +46,7 @@
 ;; returns K(true) or KI(false)
 (defrecmacro (le-eq xs ys)
   (if (pair? xs)
-      (if ((bit-xor (car xs) (car ys)) I V)
+      (if ((icons (icons V I) (icons I V)) (car xs) (car ys))
 	  KI
 	  (le-eq (cdr xs) (cdr ys)))
       K))
@@ -45,7 +55,7 @@
 (defrecmacro (le-lt-rec xs ys borrow)
   (if (pair? xs)
       (le-lt-rec (cdr xs) (cdr ys)
-		 (((car xs) bit-and bit-or) (car ys) borrow))
+		 (borrow-table (car xs) (car ys) borrow))
       borrow))
 
 (defmacro (le-lt xs ys) (le-lt-rec xs ys KI))
