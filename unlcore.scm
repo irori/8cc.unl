@@ -56,13 +56,17 @@
 
 (defmacro (le-sub xs ys) (le-sub-rec xs ys KI))
 
+(defmacro eq-table
+  (icons
+   (icons I (K (K (K I))))
+   (icons (K (K (K I))) I)))
+
 ;; returns K(true) or KI(false)
-(defrecmacro (le-eq xs ys)
-  (if (pair? xs)
-      (if ((icons (icons V I) (icons I V)) (car xs) (car ys))
-	  KI
-	  (le-eq (cdr xs) (cdr ys)))
-      K))
+(defrecmacro (le-eq-rec xs ys)
+  (eq-table (car xs) (car ys) le-eq-rec (cdr xs) (cdr ys)))
+
+(defmacro (le-eq xs ys)
+  (if (le-eq-rec xs ys) KI K))
 
 (defmacro borrow-table
   (icons
