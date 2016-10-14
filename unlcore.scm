@@ -79,7 +79,7 @@
 (defmacro (le-lt xs ys) (le-lt-rec xs ys KI))
 
 (defrecmacro (->le-inc)
-  (icons (lambda (tl) (cons KI (tl ->le-inc)))
+  (icons (lambda (tl) ((icons KI) (tl ->le-inc)))
 	 (icons K)))
 
 (defmacro (le-inc xs)
@@ -87,7 +87,7 @@
 
 (defrecmacro (->le-dec)
   (icons (icons KI)
-	 (lambda (tl) (cons K (tl ->le-dec)))))
+	 (lambda (tl) ((icons K) (tl ->le-dec)))))
 
 (defmacro (le-dec xs)
   (xs ->le-dec))
@@ -188,8 +188,8 @@
 	       (or (char-whitespace? c) (not (eq? (char-general-category c) 'Cc)))))
 	   (iota 128))))))
 
-(defmacro all-libs (cons* le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store putc getc))
-(defmacro core-libs (cons* le-inc le-dec le-add le-sub le-eq le-lt mem-load mem-store ""))
+(defmacro all-libs (cons* le-add le-sub le-eq le-lt mem-load mem-store putc getc))
+(defmacro core-libs (cons* le-add le-sub le-eq le-lt mem-load mem-store ""))
 
 (defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
 			  (lambda (vm) (K vm (print-le (lib-load vm vm be-1))))

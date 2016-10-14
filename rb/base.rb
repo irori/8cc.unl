@@ -57,6 +57,12 @@ class UnlAsmBase < BFAsm
   # (COMPOSE f g x) = (f (g x))
   COMPOSE = "``s`ksk"
 
+  # (n POST_INC) = n+1
+  POST_INC = "```sii``s``s`ks``s`k`si``s`kk``s`k`s`k``s`k`s``si`k`kik``s`k`si``s``s`kskk`k`k``s`k`s``si`kkk"
+
+  # (n POST_DEC) = n-1
+  POST_DEC = "```sii``s`k`s``si`k``s`k`s``si`k`kik``s`kk``s`k`s`k``s`k`s``si`kkk``s`k`si``s``s`kskk"
+
   def regpos(r)
     {:pc => 0, :a => 1, :b => 2, :c => 3, :d => 4, :bp => 5, :sp => 6}[r] or
       raise "unknown reg: #{r}"

@@ -86,45 +86,35 @@ class UnlAsmDirect < UnlAsmBase
     }
   end
 
-  def emit_lib_inc
-    emit(S2)
-    emit_lib(2)
-  end
-
-  def emit_lib_dec
-    emit(S2)
-    emit_lib(3)
-  end
-
   def emit_lib_add
     emit(S2)
     emit(S2)
-    emit_lib(4)
+    emit_lib(2)
   end
 
   def emit_lib_sub
     emit(S2)
     emit(S2)
-    emit_lib(5)
+    emit_lib(3)
   end
 
   def emit_lib_eq
     emit(S2)
     emit(S2)
-    emit_lib(6)
+    emit_lib(4)
   end
 
   def emit_lib_lt
     emit(S2)
     emit(S2)
-    emit_lib(7)
+    emit_lib(5)
   end
 
   def emit_lib_load
     emit(S2)
 
     emit(S2)
-    emit_lib(8)
+    emit_lib(6)
     emit("i")
   end
 
@@ -133,19 +123,19 @@ class UnlAsmDirect < UnlAsmBase
     emit(S2)
 
     emit(S2)
-    emit_lib(9)
+    emit_lib(7)
     emit("i")
   end
 
   def emit_lib_putc
     emit(S2)
-    emit_lib(10)
+    emit_lib(8)
   end
 
   def emit_lib_getc
     emit(S2)
     emit("`kc")
-    emit_lib(11)
+    emit_lib(9)
   end
 
   def emit_value(reg_or_imm)
@@ -230,11 +220,15 @@ class UnlAsmDirect < UnlAsmBase
     when :add
       emit_setreg(args[0]) {
         if args[1] == 1
-          emit_lib_inc
+          emit(S2)
           emit_getreg(args[0])
+          emit(K1)
+          emit(POST_INC)
         elsif args[1] == ((1 << BITS) - 1)
-          emit_lib_dec
+          emit(S2)
           emit_getreg(args[0])
+          emit(K1)
+          emit(POST_DEC)
         else
           emit_lib_add
           emit_getreg(args[0])
@@ -245,8 +239,10 @@ class UnlAsmDirect < UnlAsmBase
     when :sub
       emit_setreg(args[0]) {
         if args[1] == 1
-          emit_lib_dec
+          emit(S2)
           emit_getreg(args[0])
+          emit(K1)
+          emit(POST_DEC)
         else
           emit_lib_sub
           emit_getreg(args[0])

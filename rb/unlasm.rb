@@ -91,44 +91,36 @@ class UnlAsm < UnlAsmBase
     ap(CAR, :var)
   end
 
-  def lib_inc(e)
-    ap(nth(2, :var), e)
-  end
-
-  def lib_dec(e)
-    ap(nth(3, :var), e)
-  end
-
   def lib_add(e1, e2)
-    ap2(nth(4, :var), e1, e2)
+    ap2(nth(2, :var), e1, e2)
   end
 
   def lib_sub(e1, e2)
-    ap2(nth(5, :var), e1, e2)
+    ap2(nth(3, :var), e1, e2)
   end
 
   def lib_eq(e1, e2)
-    ap2(nth(6, :var), e1, e2)
+    ap2(nth(4, :var), e1, e2)
   end
 
   def lib_lt(e1, e2)
-    ap2(nth(7, :var), e1, e2)
+    ap2(nth(5, :var), e1, e2)
   end
 
   def lib_load(addr)
-    ap2(nth(8, :var), :var, addr)
+    ap2(nth(6, :var), :var, addr)
   end
 
   def lib_store(addr, val)
-    ap3(nth(9, :var), :var, addr, val)
+    ap3(nth(7, :var), :var, addr, val)
   end
 
   def lib_putc(e)
-    ap(nth(10, :var), e)
+    ap(nth(8, :var), e)
   end
 
   def lib_getc
-    ap("c", nth(11, :var))
+    ap("c", nth(9, :var))
   end
 
   def reg_or_simm(x)
@@ -150,15 +142,15 @@ class UnlAsm < UnlAsmBase
       set_reg(args[0], reg_or_simm(args[1]))
     when :add
       if args[1] == 1
-        set_reg(args[0], lib_inc(reg_or_simm(args[0])))
+        set_reg(args[0], ap(reg_or_simm(args[0]), POST_INC))
       elsif args[1] == ((1 << BITS) - 1)
-        set_reg(args[0], lib_dec(reg_or_simm(args[0])))
+        set_reg(args[0], ap(reg_or_simm(args[0]), POST_DEC))
       else
         set_reg(args[0], lib_add(reg_or_simm(args[0]), reg_or_simm(args[1])))
       end
     when :sub
       if args[1] == 1
-        set_reg(args[0], lib_dec(reg_or_simm(args[0])))
+        set_reg(args[0], ap(reg_or_simm(args[0]), POST_DEC))
       else
         set_reg(args[0], lib_sub(reg_or_simm(args[0]), reg_or_simm(args[1])))
       end
