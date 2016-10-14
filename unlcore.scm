@@ -78,13 +78,19 @@
 
 (defmacro (le-lt xs ys) (le-lt-rec xs ys KI))
 
-(defrecmacro (le-inc xs)
-  (xs (icons (lambda (tl) (cons KI (le-inc tl)))
-	     (icons K))))
+(defrecmacro (->le-inc)
+  (icons (lambda (tl) (cons KI (tl ->le-inc)))
+	 (icons K)))
 
-(defrecmacro (le-dec xs)
-  (xs (icons (icons KI)
-	     (lambda (tl) (cons K (le-dec tl))))))
+(defmacro (le-inc xs)
+  (xs ->le-inc))
+
+(defrecmacro (->le-dec)
+  (icons (icons KI)
+	 (lambda (tl) (cons K (tl ->le-dec)))))
+
+(defmacro (le-dec xs)
+  (xs ->le-dec))
 
 ;; for debug
 (defrecmacro (le->number xs)
