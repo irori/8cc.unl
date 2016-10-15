@@ -126,13 +126,9 @@
 (defmacro (initialize-memory data)
   (car (initialize-memory-rec (to-cons1 vm-bits) data)))
 
-(defrecmacro (le-loader addr)
-  (if (pair? addr)
-      (compose ((car addr) cdr car) (le-loader (cdr addr)))
-      I))
-
-(defmacro (load-le mem addr)
-  ((le-loader addr) mem))
+(defmacro (load-le mem)
+  (vm-bits (lambda (f a) (f (cdr a) (bit-not (car a))))
+	   (K mem)))
 
 (defrecmacro (store-le-rec f addr)
   (if (pair? addr)
@@ -155,8 +151,8 @@
 
 ; Runtime library ----------------------------------------------------
 
-(defmacro (mem-load vm addr)
-  (load-le (vm-memory vm) addr))
+(defmacro (mem-load vm)
+  (load-le (vm-memory vm)))
 
 (defmacro (mem-store vm addr val)
   (set-memory vm (store-le (vm-memory vm) addr val)))
