@@ -119,7 +119,7 @@
 	   (lambda (left lst2)
 	     ((initialize-memory-rec (1-of-1 bits) lst2)
 	      (lambda (right lst3)
-		(cons (cons left right) lst3)))))
+		(cons (cons right left) lst3)))))
 	  lst)
       (cons (zero-memory bits) nil)))
 
@@ -127,15 +127,15 @@
   (car (initialize-memory-rec (to-cons1 vm-bits) data)))
 
 (defmacro (load-le mem)
-  (vm-bits (lambda (f a) (f (cdr a) (bit-not (car a))))
+  (vm-bits (lambda (f a) (f (cdr a) (car a)))
 	   (K mem)))
 
 (defrecmacro (store-le-rec f addr)
   (if (pair? addr)
       (store-le-rec
        ((car addr)
-	(lambda (m) (cons (car m) (f (cdr m))))
-	(lambda (m) (cons (f (car m)) (cdr m))))
+	(lambda (m) (cons (f (car m)) (cdr m)))
+	(lambda (m) (cons (car m) (f (cdr m)))))
        (cdr addr))
       f))
 
