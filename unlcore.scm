@@ -130,17 +130,18 @@
   (vm-bits (lambda (f a) (f (cdr a) (car a)))
 	   (K mem)))
 
-(defrecmacro (store-le-rec f addr)
-  (if (pair? addr)
-      (store-le-rec
-       ((car addr)
-	(lambda (m) (cons (f (car m)) (cdr m)))
-	(lambda (m) (cons (car m) (f (cdr m)))))
-       (cdr addr))
-      f))
+(defmacro (store-step f g addr)
+  (f ((car addr)
+      (lambda (m) (cons (g (car m)) (cdr m)))
+      (lambda (m) (cons (car m) (g (cdr m)))))
+     (cdr addr)))
 
 (defmacro (store-le mem addr val)
-  ((store-le-rec (lambda (oldval) val) addr) mem))
+  (vm-bits store-step
+	   K       ; (lambda (g addr) g)
+	   (K val) ; (lambda (oldval) val)
+	   addr
+	   mem))
 
 ; Runner -------------------------------------------------------------
 

@@ -66,11 +66,9 @@ static char unl_core[] =
 "`d`k````s``si``s`ci`k`s``s`ksk``s`cii``s``s`kski``s``s`ks``s``s`ksk`k``si`k`ki"
 "`k``si`kk``s`kk``s``si`k`ki`kk`k``s``si`k``s``s`ks``s`kk``s`ks``s`k`s`k``s``s`"
 "ks``s`kk``s`ks``s`k`sik`kk``s``s`ksk`k`kk``s``s`ks``s`k`s`ks``s`k`s`k`s`k``s``"
-"s`ks``s`kk``s`ks``s`k`sik`kk``s`k`s``s`ks``s`k`s``s`d`k```sii``s``s`ks``s`k`s`"
-"ks``s``s`ks``s`k`s`ks``s`k`s`k`s``s`k``s`kc``s`k`s`k`k`ki``ss`k`kk``si`k`k`ki`"
-"`s``s`ks``s`k`s`ks``s`k`s`k`s`ks``s``s`ks``s`kk``s`ks``s`kk``s`ks``s``s`kskk`k"
-"``s``s`ks``s`k`s`ks``s`k`s``s`ks``s``s`ksk`k`kk``s`kk``s`kk``s``s`ks``s`k`s`k`"
-"`s``s`ks``s`kk``s`ks``s`k`sik`kk``s``s`ksk`k``si`kk`k``si`k`ki``s`kk``s`kk``s`"
-"k`s``s`k``s``s`ks``s`kk``s`ks``s`k`sik`kk``si`kk``s``s`ksk`k``si`k`ki`k`k``s``"
-"s`ksk`k`k`ki`k``s`kkk`k`k`kikk``s`kk``s``s`ks``s``s`ksk`k`k`ki`k`kk``s`kk``s``"
-"s`ks``s``s`ksk`k`k`ki`k`k`ki`k";
+"s`ks``s`kk``s`ks``s`k`sik`kk``s`k`s``s`ks``s`k`s``s`d`k`````s``si``s`ci`k`s``s"
+"`ksk``s`cii``s``s`kski``s``s`ks``s`k`s`ks``s``s`ks``s`kk``s`ksk`k``s``s`ks``s`"
+"k`s``si`kk``s`kk``s``s`ks``s`k`s`k``s``s`ks``s`kk``s`ks``s`k`sik`kk``s``s`ksk`"
+"k``si`kk`k``si`k`ki``s`kk``s`k`s``s`k``s``s`ks``s`kk``s`ks``s`k`sik`kk``si`kk`"
+"`s``s`ksk`k``si`k`ki`k`k``si`k`kikkk``s`kk``s``s`ks``s``s`ksk`k`k`ki`k`kk``s`k"
+"k``s``s`ks``s``s`ksk`k`k`ki`k`k`ki`k";
