@@ -74,13 +74,11 @@
    (icons (K K) I)))
 
 ;; returns K(true) or KI(false)
-(defrecmacro (le-lt-rec xs ys borrow)
-  (if (pair? xs)
-      (le-lt-rec (cdr xs) (cdr ys)
-		 (borrow-table (car xs) (car ys) borrow))
-      borrow))
-
-(defmacro (le-lt xs ys) (le-lt-rec xs ys KI))
+(defmacro (le-lt xs ys)
+  (vm-bits (lambda (g xs ys borrow)
+	     (g (cdr xs) (cdr ys) (borrow-table (car xs) (car ys) borrow)))
+	   (lambda (xs ys b) b)
+	   xs ys KI))
 
 (defrecmacro (->le-inc)
   (icons (lambda (tl) ((icons KI) (tl ->le-inc)))
