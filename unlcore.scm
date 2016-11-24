@@ -108,8 +108,8 @@
 
 (defrecmacro (zero-memory bits)
   (if (cons1? bits)
-      (icons (zero-memory (1-of-1 bits))
-	     (zero-memory (1-of-1 bits)))
+      ((lambda (a f) (f a a))
+       (zero-memory (1-of-1 bits)))
       le-0))
 
 (defrecmacro (initialize-memory-rec bits lst)
