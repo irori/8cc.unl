@@ -1,0 +1,6 @@
+# -*- asm -*-
+	.text
+	getc A
+	add A, 1
+	putc A
+	exit

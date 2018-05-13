@@ -187,7 +187,7 @@
 	       (or (char-whitespace? c) (not (eq? (char-general-category c) 'Cc)))))
 	   (iota 128))))))
 
-(defmacro all-libs (cons* le-add le-sub le-eq le-lt mem-load mem-store putc getc))
+(defmacro all-libs (list le-add le-sub le-eq le-lt mem-load mem-store putc getc))
 (defmacro core-libs (cons* le-add le-sub le-eq le-lt mem-load mem-store ""))
 
 (defmacro test-code (list (lambda (vm) (mem-store vm be-1 le-1))
