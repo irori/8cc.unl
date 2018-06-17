@@ -1,3 +1,6 @@
 [submodule "8cc"]
 	path = 8cc
 	url = https://github.com/shinh/8cc.git
+[submodule "unlambda"]
+	path = unlambda
+	url = https://github.com/irori/unlambda.git
