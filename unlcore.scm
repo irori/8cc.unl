@@ -2,7 +2,7 @@
 (add-load-path "." :relative)
 
 (use parser)
-(use unlc)
+(use unlambda.compiler)
 (use lib)
 (use unlasm)
 

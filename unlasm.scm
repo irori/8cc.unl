@@ -4,7 +4,8 @@
 
 (define-module unlasm
   (use parser)
-  (use unlc)
+  (use unlambda.compiler)
+  (use unlambda.prelude)
   (use lib)
   (use srfi-1)
   (export le-number le-number2 generate)
