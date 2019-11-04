@@ -7,10 +7,11 @@
   )
 (select-module lib)
 
-(defsyntax (clist . es)
-  (fold-right (lambda (hd tl) `(cons ,hd ,tl))
-	      'nil
-	      es))
+(add-unl-syntax! 'clist
+  (lambda (form rename compare)
+    (fold-right (lambda (hd tl) (list (rename 'cons) hd tl))
+		(rename 'nil)
+		(cdr form))))
 
 (defmacro (replace-nth val n)
   (n
